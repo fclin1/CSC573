@@ -1,0 +1,55 @@
+Routing Protocols
+
+Network Working Group                                          J. Moy
+Request for Comments: 2345                                   May 1998
+
+Routing Protocols
+
+Status of this Memo
+
+   This memo provides information for the Internet community. It does
+   not specify an Internet standard of any kind.
+
+Abstract
+
+   This document describes the various routing protocols used in
+   IP networks to determine optimal paths for packet forwarding.
+
+1. Introduction
+
+   Routing protocols are essential for the operation of large-scale
+   IP networks. They enable routers to exchange information about
+   network topology and compute optimal paths.
+
+2. Interior Gateway Protocols (IGPs)
+
+   2.1 RIP (Routing Information Protocol)
+   
+   RIP is a distance-vector protocol that uses hop count as its
+   metric. Maximum hop count is 15.
+
+   2.2 OSPF (Open Shortest Path First)
+   
+   OSPF is a link-state protocol that uses Dijkstra's algorithm
+   to compute shortest paths. It supports hierarchical routing
+   through the use of areas.
+
+   2.3 IS-IS (Intermediate System to Intermediate System)
+   
+   IS-IS is another link-state protocol, originally designed for
+   OSI networks but adapted for IP routing.
+
+3. Exterior Gateway Protocols (EGPs)
+
+   3.1 BGP (Border Gateway Protocol)
+   
+   BGP is the routing protocol used between autonomous systems
+   on the Internet. It is a path-vector protocol that enables
+   policy-based routing decisions.
+
+4. Conclusion
+
+   The choice of routing protocol depends on network size,
+   topology, and administrative requirements.
+
+[End of RFC 2345]

@@ -1,0 +1,52 @@
+TCP/IP Illustrated
+
+Network Working Group                                         W. Stevens
+Request for Comments: 123                                    January 1994
+
+TCP/IP Illustrated
+
+Status of this Memo
+
+   This memo provides information for the Internet community. It does
+   not specify an Internet standard of any kind.
+
+Abstract
+
+   This document provides a comprehensive guide to TCP/IP protocols,
+   covering the fundamental concepts of internetworking and the
+   protocol stack that powers the modern Internet.
+
+1. Introduction
+
+   The TCP/IP protocol suite is the foundation of the Internet. This
+   RFC provides an illustrated guide to understanding how these
+   protocols work together to enable global communication.
+
+2. The Protocol Stack
+
+   2.1 Link Layer
+   
+   The link layer handles the physical transmission of data over
+   network hardware such as Ethernet or Wi-Fi.
+
+   2.2 Network Layer (IP)
+   
+   The Internet Protocol (IP) provides addressing and routing
+   functionality, enabling packets to traverse multiple networks.
+
+   2.3 Transport Layer (TCP/UDP)
+   
+   TCP provides reliable, ordered delivery of data streams.
+   UDP provides connectionless, best-effort delivery.
+
+   2.4 Application Layer
+   
+   Application protocols like HTTP, FTP, and SMTP operate at this
+   layer, providing services to end users.
+
+3. Conclusion
+
+   Understanding TCP/IP is essential for network programming and
+   Internet application development.
+
+[End of RFC 123]

@@ -1,0 +1,50 @@
+RFC 3457 - Requirements for IPsec Remote Access Scenarios
+
+Network Working Group                                          S. Kelly
+Request for Comments: 3457                                   Airespace
+Category: Informational                                    January 2003
+
+Requirements for IPsec Remote Access Scenarios
+
+Status of this Memo
+
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.
+
+Abstract
+
+   This document describes requirements for IP Security (IPsec) when
+   used in remote access scenarios. Remote access refers to the 
+   situation where a mobile or remote host needs secure access to
+   a corporate network over the Internet.
+
+1. Introduction
+
+   IPsec provides a framework for providing security services at the
+   IP layer. When used for remote access, there are additional 
+   requirements beyond those for site-to-site VPN scenarios.
+
+2. Terminology
+
+   Remote Access Client: A host that initiates an IPsec connection
+   to access resources on a protected network.
+
+   Security Gateway: A device that terminates IPsec tunnels and
+   provides access control to the protected network.
+
+3. Requirements
+
+   3.1 Authentication
+   
+   The remote access client must authenticate to the security gateway
+   using strong authentication methods such as certificates or 
+   one-time passwords.
+
+   3.2 Address Assignment
+   
+   The security gateway must be able to assign an internal IP address
+   to the remote access client for use within the protected network.
+
+This is a sample RFC file for testing the P2P-CI system.
+
+[End of RFC 3457]

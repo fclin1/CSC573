@@ -1,0 +1,35 @@
+RFC 2345 - Domain Names and Company Name Retrieval
+
+Network Working Group                                        J. Klensin
+Request for Comments: 2345                                          MCI
+Category: Experimental                                         May 1998
+
+Domain Names and Company Name Retrieval
+
+Status of this Memo
+
+   This memo defines an Experimental Protocol for the Internet
+   community.  It does not specify an Internet standard of any kind.
+
+Abstract
+
+   This document describes a system for mapping company names to 
+   domain names using a distributed database architecture.
+
+1. Introduction
+
+   The rapid growth of the Internet has led to an increasing need
+   for intuitive domain name systems that can map human-readable
+   company names to their corresponding domain names.
+
+2. Protocol Overview
+
+   The protocol operates as follows:
+   
+   a) Client sends a query containing the company name
+   b) Server performs lookup in the database
+   c) Server returns matching domain names
+
+This is a sample RFC file for testing the P2P-CI system.
+
+[End of RFC 2345]

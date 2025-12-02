@@ -1,0 +1,23 @@
+RFC 123 - A Proferred Official ICP
+
+Network Working Group                                       S. Crocker
+Request for Comments: 123                                        UCLA
+NIC: 5837                                                  April 1971
+
+A Proferred Official ICP
+
+This RFC describes the Initial Connection Protocol (ICP) used to 
+establish connections between hosts on the ARPANET.
+
+The protocol defines the following steps:
+
+1. The user process on the requesting host contacts the server process
+   on the responding host using a well-known socket.
+
+2. The server allocates a new socket pair for the connection.
+
+3. Data transfer begins using the allocated sockets.
+
+This is a sample RFC file for testing the P2P-CI system.
+
+[End of RFC 123]
