@@ -5,7 +5,6 @@ A peer-to-peer system for downloading RFCs (Requests for Comments) with a centra
 ## Project Structure
 
 ```
-p1/
 ├── config.py       # Configuration constants
 ├── protocol.py     # Protocol message formatting/parsing
 ├── server.py       # Central index server
@@ -20,39 +19,6 @@ p1/
 ├── rfc_b/          # Peer B's RFC directory (has RFC 2345)
 │   └── rfc2345.txt
 └── README.md       # This file
-```
-
-## Requirements
-
-- Python 3.6 or higher
-- No external dependencies (uses only standard library)
-
-## How to Run (Manually without using Make)
-
-### 1. Start the Central Server
-
-Open a terminal and run:
-
-```bash
-cd p1
-python3 server.py
-```
-
-The server will start listening on port 7734.
-
-### 2. Start Peer Clients
-
-Open separate terminals for each peer and run:
-
-```bash
-cd p1
-python3 peer.py
-```
-
-Or connect to a remote server:
-
-```bash
-python3 peer.py <server_hostname>
 ```
 
 ## Quick Start with Makefile (Recommended)
@@ -105,6 +71,34 @@ Now you can test peer-to-peer transfers:
 | `make peer-empty` | Start a peer with empty RFC directory |
 | `make clean` | Remove temporary files and downloaded RFCs |
 | `make help` | Show help message |
+
+## How to Run (Manually without using Make)
+
+### 1. Start the Central Server
+
+Open a terminal and run:
+
+```bash
+cd p1
+python3 server.py
+```
+
+The server will start listening on port 7734.
+
+### 2. Start Peer Clients
+
+Open separate terminals for each peer and run:
+
+```bash
+cd p1
+python3 peer.py
+```
+
+Or connect to a remote server:
+
+```bash
+python3 peer.py <server_hostname>
+```
 
 ## Peer Commands
 
@@ -168,3 +162,12 @@ Status Codes:
 - Each peer runs an upload server on a dynamically assigned port
 - RFCs are stored as text files in the `rfc/` directory
 - File naming convention: `rfc<number>.txt` (e.g., `rfc123.txt`)
+
+## Requirements
+
+- Python 3.6 or higher
+- No external dependencies (uses only standard library)
+
+## Author
+
+Frank Lin (fclin)
