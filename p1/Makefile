@@ -8,24 +8,24 @@ all: help
 
 # Run the central server on port 7734
 server:
-	python server.py
+	python3 server.py
 
 # Run a peer client with default RFC directory (./rfc)
 peer:
-	python peer.py
+	python3 peer.py
 
 # Run Peer A with rfc_a directory (has RFC 123)
 peer-a:
-	python peer.py -d rfc_a
+	python3 peer.py -d rfc_a
 
 # Run Peer B with rfc_b directory (has RFC 2345)
 peer-b:
-	python peer.py -d rfc_b
+	python3 peer.py -d rfc_b
 
 # Run a peer with empty RFC directory (for testing downloads)
 peer-empty:
 	@mkdir -p rfc_empty
-	python peer.py -d rfc_empty
+	python3 peer.py -d rfc_empty
 
 # Clean up temporary files and downloaded RFCs (keep original RFCs)
 clean:
