@@ -14,12 +14,22 @@ HEADER_SIZE = 8
 
 def checksum(data):
     """Compute Internet checksum (RFC 1071)."""
+    # Handle both Python 2 strings and Python 3 bytes
+    if isinstance(data, str):
+        data = bytearray(data)
+    
     if len(data) % 2:
-        data += b'\x00'
+        if isinstance(data, bytearray):
+            data.append(0)
+        else:
+            data += b'\x00'
     
     total = 0
     for i in range(0, len(data), 2):
-        total += (data[i] << 8) + data[i + 1]
+        # Handle both bytes and bytearray
+        byte1 = data[i] if isinstance(data[i], int) else ord(data[i])
+        byte2 = data[i + 1] if isinstance(data[i + 1], int) else ord(data[i + 1])
+        total += (byte1 << 8) + byte2
         total = (total & 0xFFFF) + (total >> 16)  # fold carry
     
     return ~total & 0xFFFF

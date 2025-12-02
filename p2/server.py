@@ -44,9 +44,10 @@ def run_server(port, output_filename, loss_probability):
                     output_file.flush()
                     server_socket.sendto(make_ack_packet(sequence_number), client_address)
                     expected_sequence_number += 1
-                elif expected_sequence_number > 0:
-                    # Out-of-order: resend last ACK
-                    server_socket.sendto(make_ack_packet(expected_sequence_number - 1), client_address)
+                else:
+                    # Out-of-order: resend ACK for last correctly received packet
+                    if expected_sequence_number > 0:
+                        server_socket.sendto(make_ack_packet(expected_sequence_number - 1), client_address)
                     
             except KeyboardInterrupt:
                 print("\nShutting down...")

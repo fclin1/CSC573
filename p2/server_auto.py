@@ -1,0 +1,92 @@
+"""
+Simple-FTP Server (Receiver) - Go-back-N ARQ with auto-reset
+
+Usage: python server_auto.py <port> <output-file> <loss-probability>
+"""
+
+import socket
+import sys
+import random
+import time
+from packet import parse_packet, make_ack_packet, is_valid_data
+
+
+def run_server(port, output_filename, loss_probability):
+    """Receive file using Go-back-N protocol with auto-reset between transfers."""
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    server_socket.bind(('', port))
+    server_socket.settimeout(5.0)  # 5 second timeout to detect end of transfer
+    
+    print("Listening on port {}, writing to '{}', loss={}".format(port, output_filename, loss_probability))
+    
+    transfer_count = 0
+    
+    while True:
+        transfer_count += 1
+        print("\n=== Transfer {} starting ===".format(transfer_count))
+        
+        expected_sequence_number = 0
+        last_packet_time = time.time()
+        
+        with open(output_filename, 'wb') as output_file:
+            while True:
+                try:
+                    packet_data, client_address = server_socket.recvfrom(65535)
+                    last_packet_time = time.time()
+                    
+                    parsed_packet = parse_packet(packet_data)
+                    if not parsed_packet:
+                        continue
+                    
+                    sequence_number, received_checksum, flags, payload = parsed_packet
+                    
+                    # Simulate packet loss
+                    if random.random() <= loss_probability:
+                        print("Packet loss, sequence number = {}".format(sequence_number))
+                        continue
+                    
+                    # Validate packet
+                    if not is_valid_data(sequence_number, received_checksum, flags, payload):
+                        continue
+                    
+                    if sequence_number == expected_sequence_number:
+                        # In-order: accept data, send ACK, advance
+                        output_file.write(payload)
+                        output_file.flush()
+                        server_socket.sendto(make_ack_packet(sequence_number), client_address)
+                        expected_sequence_number += 1
+                    else:
+                        # Out-of-order: resend ACK for last correctly received packet
+                        if expected_sequence_number > 0:
+                            server_socket.sendto(make_ack_packet(expected_sequence_number - 1), client_address)
+                        
+                except socket.timeout:
+                    # No packets for 5 seconds - assume transfer complete
+                    if expected_sequence_number > 0:
+                        print("=== Transfer {} complete: {} packets received ===".format(transfer_count, expected_sequence_number))
+                        break
+                    # else: no transfer started yet, keep waiting
+                    
+                except KeyboardInterrupt:
+                    print("\nShutting down...")
+                    server_socket.close()
+                    return
+
+
+def main():
+    if len(sys.argv) != 4:
+        print("Usage: python server_auto.py <port> <output-file> <loss-probability>")
+        sys.exit(1)
+    
+    port = int(sys.argv[1])
+    output_filename = sys.argv[2]
+    loss_probability = float(sys.argv[3])
+    
+    if not (0 <= loss_probability < 1):
+        sys.exit("Error: loss probability must be in [0, 1)")
+    
+    run_server(port, output_filename, loss_probability)
+
+
+if __name__ == "__main__":
+    main()
