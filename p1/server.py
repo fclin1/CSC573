@@ -1,12 +1,5 @@
-"""
-Central Index Server for P2P-CI system.
-
-Listens on port 7734 and maintains:
-- List of active peers (hostname, upload_port)
-- Index of RFCs (rfc_number, title, hostname)
-
-Handles ADD, LOOKUP, LIST requests from peers.
-"""
+# Central Index Server for P2P-CI
+# Maintains active peers and RFC index, handles ADD/LOOKUP/LIST requests
 
 import socket
 import threading
@@ -19,16 +12,12 @@ class CentralServer:
         self.host = host
         self.port = port
         self.server_socket = None
-        
-        # Thread-safe data structures
         self.lock = threading.Lock()
-        self.peers = []  # List of (hostname, port)
-        self.rfc_index = []  # List of (rfc_number, title, hostname, port)
-        
+        self.peers = []       # [(hostname, port), ...]
+        self.rfc_index = []   # [(rfc_number, title, hostname, port), ...]
         self.running = False
     
     def start(self):
-        """Start the server and listen for connections."""
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_socket.bind((self.host, self.port))
@@ -41,16 +30,10 @@ class CentralServer:
         try:
             while self.running:
                 try:
-                    client_socket, client_address = self.server_socket.accept()
-                    
-                    # Spawn a new thread for each peer
-                    client_thread = threading.Thread(
-                        target=self.handle_peer,
-                        args=(client_socket, client_address)
-                    )
-                    client_thread.daemon = True
-                    client_thread.start()
-                    
+                    client_socket, addr = self.server_socket.accept()
+                    t = threading.Thread(target=self.handle_peer, args=(client_socket, addr))
+                    t.daemon = True
+                    t.start()
                 except socket.error:
                     if self.running:
                         raise
@@ -60,83 +43,67 @@ class CentralServer:
             self.stop()
     
     def stop(self):
-        """Stop the server."""
         self.running = False
         if self.server_socket:
             self.server_socket.close()
         print("[Server] Server stopped")
     
-    def handle_peer(self, client_socket, client_address):
-        """Handle communication with a connected peer."""
-        peer_hostname = None
-        peer_port = None
-        first_message = True
+    def handle_peer(self, client_socket, client_addr):
+        peer_host, peer_port = None, None
+        first_msg = True
         
         try:
             while self.running:
-                # Receive data from peer
-                data = self.receive_message(client_socket)
+                data = self.recv_message(client_socket)
                 if not data:
                     break
                 
-                # Parse the request
-                request = parse_p2s_request(data)
-                if not request:
-                    response = build_p2s_response(400)
-                    client_socket.send(response.encode('utf-8'))
+                req = parse_p2s_request(data)
+                if not req:
+                    client_socket.send(build_p2s_response(400).encode())
                     continue
                 
-                # Check version
-                if request['version'] != VERSION:
-                    response = build_p2s_response(505)
-                    client_socket.send(response.encode('utf-8'))
+                if req['version'] != VERSION:
+                    client_socket.send(build_p2s_response(505).encode())
                     continue
                 
-                # Extract peer info from headers
-                headers = request['headers']
-                peer_hostname = headers.get('Host', client_address[0])
-                peer_port = int(headers.get('Port', 0))
+                peer_host = req['headers'].get('Host', client_addr[0])
+                peer_port = int(req['headers'].get('Port', 0))
                 
-                # Log connection and show state on first message
-                if first_message:
-                    print(f"[Server] Connection from host {peer_hostname} at {client_address[0]}:{peer_port}")
-                    # Add peer to list
+                if first_msg:
+                    print(f"[Server] Connection from host {peer_host} at {client_addr[0]}:{peer_port}")
                     with self.lock:
-                        peer_exists = any(p[0] == peer_hostname and p[1] == peer_port for p in self.peers)
-                        if not peer_exists:
-                            self.peers.insert(0, (peer_hostname, peer_port))
-                            print(f"[Server] Added {peer_hostname}:{peer_port}")
-                        # Always show state when a new client connects
-                        self.print_state_unlocked()
-                    first_message = False
+                        if not self._peer_exists(peer_host, peer_port):
+                            self.peers.insert(0, (peer_host, peer_port))
+                            print(f"[Server] Added {peer_host}:{peer_port}")
+                        self._print_state()
+                    first_msg = False
                 
-                # Handle the request
-                method = request['method']
+                # Handle request
+                method = req['method']
                 if method == 'ADD':
-                    response = self.handle_add(request, peer_hostname, peer_port)
+                    response = self.handle_add(req, peer_host, peer_port)
                 elif method == 'LOOKUP':
-                    response = self.handle_lookup(request)
+                    response = self.handle_lookup(req)
                 elif method == 'LIST':
                     response = self.handle_list()
                 else:
                     response = build_p2s_response(400)
                 
-                client_socket.send(response.encode('utf-8'))
+                client_socket.send(response.encode())
                 
         except Exception as e:
-            print(f"[Server] Error handling peer {client_address}: {e}")
+            print(f"[Server] Error handling peer {client_addr}: {e}")
         finally:
-            # Clean up peer data when connection closes
-            if peer_hostname:
-                self.remove_peer(peer_hostname, peer_port)
+            if peer_host:
+                self.remove_peer(peer_host, peer_port)
             client_socket.close()
-            if peer_hostname and peer_port:
-                print(f"[Server] Connection closed for {peer_hostname}:{peer_port}")
+            if peer_host and peer_port:
+                print(f"[Server] Connection closed for {peer_host}:{peer_port}")
             else:
-                print(f"[Server] Connection closed for {client_address}")
+                print(f"[Server] Connection closed for {client_addr}")
     
-    def receive_message(self, sock):
-        """Receive a complete message from socket."""
+    def recv_message(self, sock):
         data = b""
         while True:
             try:
@@ -144,113 +111,77 @@ class CentralServer:
                 if not chunk:
                     return None
                 data += chunk
-                # Check for end of message (double CRLF)
                 if b"\r\n\r\n" in data:
                     break
             except socket.error:
                 return None
-        return data.decode('utf-8')
+        return data.decode()
     
-    def print_state_unlocked(self):
-        """Print current server state (must be called with lock held)."""
-        print("[Server] === Current State ===", flush=True)
-        
-        # Print active peers
+    def _peer_exists(self, hostname, port):
+        return any(h == hostname and p == port for h, p in self.peers)
+    
+    def _print_state(self):
+        """Print server state (call with lock held)."""
+        print("[Server] === Current State ===")
         if self.peers:
-            peer_list = ", ".join(f"{h}:{p}" for h, p in self.peers)
-            print(f"[Server] Active Peers: {peer_list}", flush=True)
+            print(f"[Server] Active Peers: {', '.join(f'{h}:{p}' for h, p in self.peers)}")
         else:
-            print("[Server] Active Peers: (none)", flush=True)
+            print("[Server] Active Peers: (none)")
         
-        # Print RFC index
         if self.rfc_index:
-            print("[Server] RFC Index:", flush=True)
-            for rfc_num, title, hostname, port in self.rfc_index:
-                print(f"[Server]   RFC {rfc_num} {title} ({hostname}:{port})", flush=True)
+            print("[Server] RFC Index:")
+            for num, title, host, port in self.rfc_index:
+                print(f"[Server]   RFC {num} {title} ({host}:{port})")
         else:
-            print("[Server] RFC Index: (empty)", flush=True)
-        
-        print("[Server] =========================", flush=True)
+            print("[Server] RFC Index: (empty)")
+        print("[Server] =========================")
     
-    def print_state(self):
-        """Print current server state (peers and RFC index)."""
-        with self.lock:
-            self.print_state_unlocked()
-    
-    def handle_add(self, request, hostname, port):
-        """Handle ADD request - add RFC to index."""
-        rfc_number = request['rfc_number']
-        title = request['headers'].get('Title', '')
+    def handle_add(self, req, hostname, port):
+        rfc_num = req['rfc_number']
+        title = req['headers'].get('Title', '')
         
         with self.lock:
-            # Ensure peer is in list (may already be added on first connection)
-            peer_exists = any(p[0] == hostname and p[1] == port for p in self.peers)
-            if not peer_exists:
+            if not self._peer_exists(hostname, port):
                 self.peers.insert(0, (hostname, port))
                 print(f"[Server] Added {hostname}:{port}")
             
-            # Add RFC to index (at front of list) - include port to distinguish peers
-            self.rfc_index.insert(0, (rfc_number, title, hostname, port))
-            print(f"[Server] Added RFC {rfc_number} from {hostname}:{port}")
-            
-            # Print current state after adding RFC
-            self.print_state_unlocked()
+            self.rfc_index.insert(0, (rfc_num, title, hostname, port))
+            print(f"[Server] Added RFC {rfc_num} from {hostname}:{port}")
+            self._print_state()
         
-        # Response echoes back the RFC info
-        data_line = f"RFC {rfc_number} {title} {hostname} {port}"
-        return build_p2s_response(200, [data_line])
+        return build_p2s_response(200, [f"RFC {rfc_num} {title} {hostname} {port}"])
     
-    def handle_lookup(self, request):
-        """Handle LOOKUP request - find peers with specified RFC."""
-        rfc_number = request['rfc_number']
-        
+    def handle_lookup(self, req):
+        rfc_num = req['rfc_number']
         with self.lock:
-            # Find all records for this RFC
-            matches = []
-            for rfc_num, title, hostname, port in self.rfc_index:
-                if rfc_num == rfc_number:
-                    matches.append(f"RFC {rfc_num} {title} {hostname} {port}")
+            matches = [f"RFC {n} {t} {h} {p}" 
+                      for n, t, h, p in self.rfc_index if n == rfc_num]
         
         if matches:
             return build_p2s_response(200, matches)
-        else:
-            return build_p2s_response(404)
+        return build_p2s_response(404)
     
     def handle_list(self):
-        """Handle LIST request - return entire RFC index."""
         with self.lock:
             if not self.rfc_index:
                 return build_p2s_response(404)
-            
-            data_lines = []
-            for rfc_num, title, hostname, port in self.rfc_index:
-                data_lines.append(f"RFC {rfc_num} {title} {hostname} {port}")
-        
-        return build_p2s_response(200, data_lines)
+            lines = [f"RFC {n} {t} {h} {p}" for n, t, h, p in self.rfc_index]
+        return build_p2s_response(200, lines)
     
     def remove_peer(self, hostname, port):
-        """Remove all records associated with a peer."""
         with self.lock:
-            # Remove from peer list
             self.peers = [(h, p) for h, p in self.peers 
                          if not (h == hostname and p == port)]
-            
-            # Remove from RFC index (match both hostname and port)
             self.rfc_index = [(n, t, h, p) for n, t, h, p in self.rfc_index 
                              if not (h == hostname and p == port)]
-            
             print(f"[Server] Removed peer {hostname}:{port} and associated RFCs")
-            
-            # Print current state after removal
-            self.print_state_unlocked()
+            self._print_state()
 
 
 def main():
-    """Main entry point for the server."""
     print("=" * 50)
     print("P2P-CI Central Index Server")
     print("=" * 50)
-    
     server = CentralServer()
     server.start()
 
