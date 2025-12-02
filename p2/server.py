@@ -10,12 +10,12 @@ import random
 from packet import parse_packet, make_ack_packet, is_valid_data
 
 
-def run_server(port: int, output_filename: str, loss_probability: float):
+def run_server(port, output_filename, loss_probability):
     """Receive file using Go-back-N protocol."""
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_socket.bind(('', port))
     
-    print(f"Listening on port {port}, writing to '{output_filename}', loss={loss_probability}")
+    print("Listening on port {}, writing to '{}', loss={}".format(port, output_filename, loss_probability))
     
     expected_sequence_number = 0
     
@@ -31,7 +31,7 @@ def run_server(port: int, output_filename: str, loss_probability: float):
                 
                 # Simulate packet loss
                 if random.random() <= loss_probability:
-                    print(f"Packet loss, sequence number = {sequence_number}")
+                    print("Packet loss, sequence number = {}".format(sequence_number))
                     continue
                 
                 # Validate packet

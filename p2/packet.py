@@ -12,7 +12,7 @@ ACK_FLAG = 0xAAAA   # 1010101010101010
 HEADER_SIZE = 8
 
 
-def checksum(data: bytes) -> int:
+def checksum(data):
     """Compute Internet checksum (RFC 1071)."""
     if len(data) % 2:
         data += b'\x00'
@@ -25,18 +25,18 @@ def checksum(data: bytes) -> int:
     return ~total & 0xFFFF
 
 
-def make_data_packet(sequence_number: int, data: bytes) -> bytes:
+def make_data_packet(sequence_number, data):
     """Create a data packet: header + payload."""
     header = struct.pack('!IHH', sequence_number, checksum(data), DATA_FLAG)
     return header + data
 
 
-def make_ack_packet(sequence_number: int) -> bytes:
+def make_ack_packet(sequence_number):
     """Create an ACK packet."""
     return struct.pack('!IHH', sequence_number, 0, ACK_FLAG)
 
 
-def parse_packet(packet: bytes) -> tuple | None:
+def parse_packet(packet):
     """Parse any packet. Returns (sequence_number, checksum_or_zero, flags, data) or None."""
     if len(packet) < HEADER_SIZE:
         return None
@@ -44,11 +44,11 @@ def parse_packet(packet: bytes) -> tuple | None:
     return sequence_number, checksum_or_zero, flags, packet[HEADER_SIZE:]
 
 
-def is_valid_data(sequence_number: int, received_checksum: int, flags: int, data: bytes) -> bool:
+def is_valid_data(sequence_number, received_checksum, flags, data):
     """Check if parsed packet is valid data with correct checksum."""
     return flags == DATA_FLAG and received_checksum == checksum(data)
 
 
-def is_ack(flags: int) -> bool:
+def is_ack(flags):
     """Check if flags indicate an ACK packet."""
     return flags == ACK_FLAG

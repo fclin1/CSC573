@@ -12,7 +12,7 @@ from packet import make_data_packet, parse_packet, is_ack, HEADER_SIZE
 TIMEOUT = 0.5  # seconds
 
 
-def create_packets(input_filename: str, max_segment_size: int) -> list[bytes]:
+def create_packets(input_filename, max_segment_size):
     """Read file and segment into packets."""
     with open(input_filename, 'rb') as input_file:
         file_data = input_file.read()
@@ -23,11 +23,11 @@ def create_packets(input_filename: str, max_segment_size: int) -> list[bytes]:
         segment_data = file_data[offset:offset + max_segment_size]
         packet_list.append(make_data_packet(sequence_number, segment_data))
     
-    print(f"Loaded '{input_filename}': {len(file_data)} bytes, {len(packet_list)} packets")
+    print("Loaded '{}': {} bytes, {} packets".format(input_filename, len(file_data), len(packet_list)))
     return packet_list
 
 
-def send_file(server_host: str, server_port: int, packet_list: list[bytes], window_size: int):
+def send_file(server_host, server_port, packet_list, window_size):
     """Transfer packets using Go-back-N protocol."""
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     client_socket.settimeout(TIMEOUT)
@@ -38,7 +38,7 @@ def send_file(server_host: str, server_port: int, packet_list: list[bytes], wind
     timer_start_time = None            # when timer was started
     retransmission_count = 0
     
-    print(f"Sending to {server_host}:{server_port}, window={window_size}")
+    print("Sending to {}:{}, window={}".format(server_host, server_port, window_size))
     transfer_start_time = time.time()
     
     while window_base < len(packet_list):
@@ -64,14 +64,14 @@ def send_file(server_host: str, server_port: int, packet_list: list[bytes], wind
         
         # Handle timeout: retransmit all unACKed packets
         if timer_start_time and (time.time() - timer_start_time) >= TIMEOUT:
-            print(f"Timeout, sequence number = {window_base}")
+            print("Timeout, sequence number = {}".format(window_base))
             timer_start_time = time.time()
             for sequence_number in range(window_base, next_sequence_number):
                 client_socket.sendto(packet_list[sequence_number], server_address)
                 retransmission_count += 1
     
     total_transfer_time = time.time() - transfer_start_time
-    print(f"\nDone! Time: {total_transfer_time:.3f}s, Retransmissions: {retransmission_count}")
+    print("\nDone! Time: {:.3f}s, Retransmissions: {}".format(total_transfer_time, retransmission_count))
     client_socket.close()
     return total_transfer_time
 
