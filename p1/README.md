@@ -27,7 +27,7 @@ p1/
 - Python 3.6 or higher
 - No external dependencies (uses only standard library)
 
-## How to Run
+## How to Run (Manually without using Make)
 
 ### 1. Start the Central Server
 
@@ -55,7 +55,7 @@ Or connect to a remote server:
 python3 peer.py <server_hostname>
 ```
 
-## Quick Start with Makefile
+## Quick Start with Makefile (Recommended)
 
 The easiest way to run the system is using the provided Makefile:
 
@@ -88,6 +88,11 @@ Now you can test peer-to-peer transfers:
 - From Peer B, use command `2` (LOOKUP) to find RFC 123
 - From Peer B, use command `4` (GET) to download RFC 123 from Peer A
 - Vice versa with Peer A downloading RFC 2345 from Peer B
+
+**Once Finished:**
+1. End peer A and peer B using the built-in program command to quit (type `6` and hit enter).
+2. End server by using `Ctrl-C` to terminate the listening loop.
+3. Run `make clean` to reset the state of the files and folders.
 
 ### Available Makefile Targets
 
